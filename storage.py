@@ -28,12 +28,14 @@ class AppendOnlyLog:
         os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
 
     def replay(self) -> Iterator[Tuple[str, str]]:
-        """Yield (key, value) in write order by scanning the log.
-
-        Robustness notes:
-        - Skips empty/malformed/non-SET lines
-        - Preserves spaces inside values (split with maxsplit=2)
-        - Any I/O or Unicode error is logged and stops replay gracefully
+        """Yield (key, value) entries by scanning the log from start.
+    
+        Returns:
+            Iterator[Tuple[str, str]]: (key, value) pairs in write order.
+    
+        Robustness:
+            Skips empty/malformed/non-SET lines. On I/O/Unicode errors, stops
+            replay gracefully (no exceptions bubble up to the CLI).
         """
         if not os.path.exists(self.path):
             return

@@ -23,5 +23,12 @@ class KVEngine:
         self._index.set(key, value)
 
     def get(self, key: str) -> Optional[str]:
-        """Return the latest value for key, or None if missing."""
+        """Return the latest value for a key.
+
+        Args:
+            key: Key to look up.
+
+        Returns:
+            The value string if present, else None.
+        """
         return self._index.get(key)
