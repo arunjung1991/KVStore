@@ -13,7 +13,10 @@ class KVEngine:
         self._load_from_log()
 
     def _load_from_log(self) -> None:
-        """Populate the in-memory index from the on-disk log."""
+        """Rebuild in-memory state from the append-only log.
+
+        For each SET in order, write to the index — later entries overwrite earlier ones,
+        achieving last-write-wins across restarts."""
         for key, value in self._log.replay() or []:
             self._index.set(key, value)
 

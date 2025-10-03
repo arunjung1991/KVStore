@@ -29,13 +29,15 @@ class AppendOnlyLog:
 
     def replay(self) -> Iterator[Tuple[str, str]]:
         """Yield (key, value) entries by scanning the log from start.
-    
+
+        Format:
+            Each line: 'SET <key> <value>\\n' (value may contain spaces; no newlines)
+        Logic:
+           - Split with maxsplit=2 to preserve spaces in the value.
+           - Skip empty/malformed/non-SET lines instead of raising.
+           - On I/O/Unicode errors, stop replay gracefully (no exception leaks).
         Returns:
-            Iterator[Tuple[str, str]]: (key, value) pairs in write order.
-    
-        Robustness:
-            Skips empty/malformed/non-SET lines. On I/O/Unicode errors, stops
-            replay gracefully (no exceptions bubble up to the CLI).
+            Iterator over (key, value) in append order (last-write-wins at index level).
         """
         if not os.path.exists(self.path):
             return
