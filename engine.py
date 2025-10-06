@@ -1,6 +1,6 @@
 # engine.py
 from typing import Optional
-from index import LinearKVIndex
+from index import BPlusTreeIndex  # <-- now importing the B+ tree
 from storage import AppendOnlyLog
 
 class KVEngine:
@@ -8,15 +8,16 @@ class KVEngine:
 
     def __init__(self, db_path: str = "data.db") -> None:
         """Initialize the engine and rebuild state by replaying the log."""
-        self._index = LinearKVIndex()
+        self._index = BPlusTreeIndex()
         self._log = AppendOnlyLog(db_path)
         self._load_from_log()
 
     def _load_from_log(self) -> None:
-        """Rebuild in-memory state from the append-only log.
+        """Rebuild in-memory state by replaying SET records from disk.
 
-        For each SET in order, write to the index — later entries overwrite earlier ones,
-        achieving last-write-wins across restarts."""
+        Last-write-wins is achieved by applying entries in append order so
+        later writes overwrite earlier ones for the same key.
+        """
         for key, value in self._log.replay() or []:
             self._index.set(key, value)
 
@@ -26,12 +27,5 @@ class KVEngine:
         self._index.set(key, value)
 
     def get(self, key: str) -> Optional[str]:
-        """Return the latest value for a key.
-
-        Args:
-            key: Key to look up.
-
-        Returns:
-            The value string if present, else None.
-        """
+        """Return the latest value for a key, or None if missing."""
         return self._index.get(key)
